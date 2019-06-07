@@ -19,40 +19,43 @@ end
 ---HandsupKneel Code
 function HandsupKneel()
     ped = PlayerPedId()
+    if IsPedInAnyVehicle(ped, true) then
+        DisplayNotification("Please leave the vehicle first next time.")
+        ClearPedTasksImmediately(ped)
+    end
+    if IsPedArmed(ped, 7) then
+    dropgun("weapons@first_person@aim_rng@generic@projectile@sticky_bomb@", "plant_floor")
+    Citizen.Wait(1450)
+    SetPedDropsInventoryWeapon(GetPlayerPed(-1), GetSelectedPedWeapon(GetPlayerPed(-1)), 0.0, 0.6, -0.9, 30)
+    end
     if DoesEntityExist(ped) then
         Citizen.CreateThread(function()
             playAnim("random@arrests@busted")
             if IsEntityPlayingAnim(ped, "random@arrests@busted", "idle_a", 3)then
                 ClearPedTasksImmediately(ped)
+                ResetPedMovementClipset(ped, 0.0)
 			elseif not IsEntityPlayingAnim(ped, "random@arrests@busted", "idle_a", 3) then
                 TaskPlayAnim(ped, "random@arrests@busted", "idle_a", 8.0, -8, -1, 49, 0, 0, 0, 0)
-                TaskPlayAnim(ped, "random@arrests", "idle_2_hands_up", 8.0, 1.0, -1, 2, 0, 0, 0, 0) 
+                TaskPlayAnim(ped, "random@arrests", "idle_2_hands_up", 8.0, 1.0, -1, 2, 0, 0, 0, 0)
+                RequestAnimSet( "move_ped_crouched" )
+                HasAnimSetLoaded("move_ped_crouched")
+                SetPedMovementClipset(ped, "move_ped_crouched", 0.25 )
 			end
 		end)
 	end
 end
 
----Disable controls while hands are up.
-Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(0)
-        if IsEntityPlayingAnim(GetPlayerPed(PlayerId()), "random@arrests", "idle_a", 3) then
-            DisableControlAction(1, 140, true)
-            DisableControlAction(1, 141, true)
-            DisableControlAction(1, 142, true)
-            DisableControlAction(1, 23, true)
-            DisableControlAction(1, 25, true)
-            DisableControlAction(0,21,true)
-        end
-    end
-end)
+---Drop gun code
+function dropgun(dict, name)
+    local ped = GetPlayerPed(-1)
+    loadAnimDict(dict)
+    TaskPlayAnim(ped, dict, name, 8.0, 1.0, -1, 2, 0, 0, 0, 0)
+end
 
-
-Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(0)
-        if IsPedInAnyVehicle(PlayerPedId(), false) then
-            
-        end
+function loadAnimDict(dict)
+    while not HasAnimDictLoaded(dict) do
+        RequestAnimDict(dict)
+        Citizen.Wait(5)
     end
-end)
+    return true
+end
